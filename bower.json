@@ -1,0 +1,22 @@
+{
+  "name": "align-visualizer",
+  "authors": [
+    "Hitoshi Otsuki <ilikestars55@yahoo.co.jp>"
+  ],
+  "description": "Visualization suite for word alignment",
+  "main": "index.php",
+  "moduleType": [],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5"
+  }
+}
