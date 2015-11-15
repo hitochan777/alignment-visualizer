@@ -2,7 +2,7 @@
 Visualization suite for machine translation
 
 ## Requirements
-- Bower
+- [Bower](http://bower.io/)
 
 ## Install
 
