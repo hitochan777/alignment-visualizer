@@ -1,5 +1,8 @@
 <?php
 require_once("config.php");
+require_once("FileUtility.php");
+require_once("DependencyTree.php");
+require_once("Sanitizer.php");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,8 +10,8 @@ require_once("config.php");
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>あらいんめんとちぇっく</title>
-	<link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+	<title>アライメントチェック</title>
+	<!-- <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet"> -->
   </head>
   <body>
 <div class="container">
@@ -18,19 +21,27 @@ require_once("config.php");
 <?php
 $dname = isset($_GET["dname"])?$_GET["dname"]:"ja_en";
 $sys = isset($_GET["sys"])?intval($_GET["sys"]):0;
+$id = isset($_GET["id"])?intval($_GET["id"]):1;
 $data = $files[$dname];
 ?>
 <?php
 echo "<h2>$dname({$data['align'][$sys]})</h2>";
 ?>
 <?php foreach($data["align"] as $index=>$name):?>
-<a href="align.php?id=<?php echo $_GET["id"]?>&dname=<?php echo $dname?>&sys=<?php echo $index?>"><?php echo $name?></a>
+<a href="align.php?id=<?php echo $id;?>&dname=<?php echo $dname?>&sys=<?php echo $index?>"><?php echo $name?></a>
 <?php endforeach;?>
 <?php
+# Open files
 $fpt = fopen(DATADIR."/$dname/".$data["target"],"r");
 $fps = fopen(DATADIR."/$dname/".$data["source"],"r");
 $fpa = fopen(DATADIR."/$dname/".$data["align"][$sys],"r");
 $fpa2 = fopen(DATADIR."/$dname/".$data["align2"],"r");
+$fpftree = fopen(DATADIR."/$dname/".$data["source_tree"],"r"); # source tree
+$fpetree = fopen(DATADIR."/$dname/".$data["target_tree"],"r"); # target tree
+
+$ftree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpftree ));
+$etree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpetree ));
+
 $aligns = [];
 $aligns2 = [];
 $alignNum1=0.0;
@@ -38,6 +49,8 @@ $alignNum2=0.0;
 $correct=0.0;
 $cnt = 1;
 $flag = false;
+ 
+
 while(($f = fgets($fps))!==false && ($e = fgets($fpt))!==false && ($a = fgets($fpa))!==false && ($a2 = fgets($fpa2))!==false){
 	if(intval($_GET["id"])==$cnt){
 		$flag=true;
@@ -55,7 +68,6 @@ foreach(explode(" ",$a) as $value){
 	if(!array_key_exists($fIndex, $aligns)){
 		$aligns[$fIndex] = [];
 	}
-	// echo $fIndex."-".$eIndex;
   $aligns[$fIndex][$eIndex] = true;
   $alignNum1++;
 }
@@ -65,24 +77,25 @@ foreach(explode(" ",$a2) as $value){
 	if(!array_key_exists($fIndex, $aligns2)){
 		$aligns2[$fIndex] = [];
 	}
-	// echo $fIndex."-".$eIndex;
 	$aligns2[$fIndex][$eIndex] = true;
   $alignNum2++;
 }
 $fwords = explode(" ", $f);
 $ewords = explode(" ", $e);
-// echo "<table class='table table-bordered'>";
-echo "<table border='1'>";
+$ftreeBuffer = $ftree->getVisualizedDependencyTree();
+$etreeBuffer = $etree->getVisualizedDependencyTree(true);
+echo "<table border='1' style='border-collapse: collapse; empty-cells: show;'>";
 for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
 	echo "<tr>";
     echo "<td height='20'>$fIndex</td>";
-	echo "<td height='20' width='100'>${fwords[$fIndex]}</td>";
+    $ftreeBuffer[$fIndex] = Utility\Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
+	echo "<td height='20' title='".$ftree->nodeList[$fIndex]["pos"]."'>${ftreeBuffer[$fIndex]}</td>";
 	for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
 		$a1_ok = array_key_exists($fIndex,$aligns) && array_key_exists($eIndex,$aligns[$fIndex]) && $aligns[$fIndex][$eIndex];
 		$a2_ok = array_key_exists($fIndex,$aligns2) && array_key_exists($eIndex,$aligns2[$fIndex]) && $aligns2[$fIndex][$eIndex];
 		if($a1_ok && $a2_ok){
 			$color = "green";
-      $correct++;
+            $correct++;
 		}
 		else if($a1_ok){
 			$color = "blue";
@@ -97,14 +110,16 @@ for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
 	}
 	echo "</tr>";
 }
-echo "<tr><td height='20'></td><td height='20'></td>";
+echo "<tr><td></td><td></td>";
 for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
-	// echo "<td width='20'>";
-    	echo "<td>";
-	for($i = 0; $i<mb_strlen($ewords[$eIndex]);++$i){
-		echo mb_substr($ewords[$eIndex],$i,1)."<br>";
+   	echo "<td valign='top' title='".$etree->nodeList[$eIndex]["pos"]."'>";
+    error_log(Utility\Sanitizer::escapeChar($etreeBuffer[$eIndex]));
+	for($i = 0; $i<mb_strlen($etreeBuffer[$eIndex]);++$i){
+        if(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
+            break; 
+        }
+		echo Utility\Sanitizer::escapeChar(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8'))."<br>";
 	}
-	// echo $ewords[$eIndex]."<br>";
 	echo "</td>";
 }
 echo "</tr>";
