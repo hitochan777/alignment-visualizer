@@ -22,13 +22,14 @@ require_once("Sanitizer.php");
 $dname = isset($_GET["dname"])?$_GET["dname"]:"ja_en";
 $sys = isset($_GET["sys"])?intval($_GET["sys"]):0;
 $id = isset($_GET["id"])?intval($_GET["id"]):1;
+$etreeId = isset($_GET["etreeId"])?intval($_GET["etreeId"]):0;
 $data = $files[$dname];
 ?>
 <?php
 echo "<h2>$dname({$data['align'][$sys]})</h2>";
 ?>
 <?php foreach($data["align"] as $index=>$name):?>
-<a href="align.php?id=<?php echo $id;?>&dname=<?php echo $dname?>&sys=<?php echo $index?>"><?php echo $name?></a>
+<a href="align.php?id=<?php echo $id;?>&dname=<?php echo $dname?>&sys=<?php echo $index?>&etreeId=<?php echo $etreeId;?>"><?php echo $name?></a>
 <?php endforeach;?>
 <?php
 # Open files
@@ -37,7 +38,7 @@ $fps = fopen(DATADIR."/$dname/".$data["source"],"r");
 $fpa = fopen(DATADIR."/$dname/".$data["align"][$sys],"r");
 $fpa2 = fopen(DATADIR."/$dname/".$data["align2"],"r");
 $fpftree = fopen(DATADIR."/$dname/".$data["source_tree"],"r"); # source tree
-$fpetree = fopen(DATADIR."/$dname/".$data["target_tree"],"r"); # target tree
+$fpetree = fopen(DATADIR."/$dname/".$data["target_tree"][$etreeId],"r"); # target tree
 
 $ftree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpftree ));
 $etree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpetree ));
@@ -110,7 +111,15 @@ for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
 	}
 	echo "</tr>";
 }
-echo "<tr><td></td><td></td>";
+echo "<tr><td></td>";
+?>
+<td>
+<?php for($index = 0; $index < count($data["target_tree"]); $index++):?>
+<a href="align.php?id=<?php echo $_GET["id"]?>&dname=<?php echo $dname?>&sys=<?php echo $sys?>&etreeId=<?php echo $index;?>"><?php echo $data["target_tree"][$index];?></a>
+<?php endfor;?>
+</td>
+
+<?php
 for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
    	echo "<td valign='top' title='".$etree->nodeList[$eIndex]["pos"]."'>";
     error_log(Utility\Sanitizer::escapeChar($etreeBuffer[$eIndex]));
@@ -137,12 +146,12 @@ echo "precision: $precision<br>";
 echo "recall: $recall<br>";
 ?>
 <?php foreach($data["align"] as $index=>$name):?>
-<a href="align.php?id=<?php echo $_GET["id"]?>&dname=<?php echo $dname?>&sys=<?php echo $index?>"><?php echo $name?></a>
+<a href="align.php?id=<?php echo $_GET["id"]?>&dname=<?php echo $dname?>&sys=<?php echo $index?>&etreeId=<?php $etreeId;?>"><?php echo $name?></a>
 <?php endforeach;?>
 <br>
-  <a href="align.php?id=<?php echo $_GET["id"]-1?>&dname=<?php echo $dname?>&sys=<?php echo $sys?>">Back</a>
-<a href="index.php?dname=<?php echo $dname ?>&sys=<?php echo $sys?>">Home</a>
-<a href="align.php?id=<?php echo $_GET["id"]+1?>&dname=<?php echo $dname?>&sys=<?php echo $sys?>">Next</a>
+  <a href="align.php?id=<?php echo $_GET["id"]-1?>&dname=<?php echo $dname?>&sys=<?php echo $sys?>&etreeId=<?php echo $etreeId;?>">Back</a>
+<a href="index.php?dname=<?php echo $dname ?>&sys=<?php echo $sys?>&etreeId=<?php echo $etreeId;?>">Home</a>
+<a href="align.php?id=<?php echo $_GET["id"]+1?>&dname=<?php echo $dname?>&sys=<?php echo $sys?>&etreeId=<?php echo $etreeId;?>">Next</a>
 </center>
 </div>
 </div>
