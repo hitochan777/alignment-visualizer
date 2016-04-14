@@ -63,22 +63,35 @@ if(!$flag){
 	echo "<div class='alert alert-danger' role='alert'>No page found</div>";
 	exit();
 }
+
+$linkPattern = "/(\d+)-(\d+)(?:\[(.+)\])?/";
 foreach(explode(" ",$a) as $value){
-	$fIndex = intval(explode("-",$value)[0]);
-	$eIndex = intval(explode("-",$value)[1]);
+    $matches = [];
+    preg_match($linkPattern, $value, $matches);
+    if(count($matches) == 3){
+        $linkTag = $matches[3];
+    }
+    $fIndex = $matches[1];
+    $eIndex = $matches[2];
 	if(!array_key_exists($fIndex, $aligns)){
 		$aligns[$fIndex] = [];
 	}
-  $aligns[$fIndex][$eIndex] = true;
+  $aligns[$fIndex][$eIndex] = $linkTag;
   $alignNum1++;
 }
 foreach(explode(" ",$a2) as $value){
-	$fIndex = intval(explode("-",$value)[0]);
-	$eIndex = intval(explode("-",$value)[1]);
+    $linkTag = true;
+    $matches = [];
+    preg_match($linkPattern, $value, $matches);
+    if(count($matches) == 3){
+        $linkTag = $matches[3];
+    }
+    $fIndex = $matches[1];
+    $eIndex = $matches[2];
 	if(!array_key_exists($fIndex, $aligns2)){
 		$aligns2[$fIndex] = [];
 	}
-	$aligns2[$fIndex][$eIndex] = true;
+	$aligns2[$fIndex][$eIndex] = $linkTag;
   $alignNum2++;
 }
 $fwords = explode(" ", $f);
@@ -92,22 +105,35 @@ for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
     $ftreeBuffer[$fIndex] = Utility\Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
 	echo "<td height='20' title='".$ftree->nodeList[$fIndex]["pos"]."'>${ftreeBuffer[$fIndex]}</td>";
 	for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
-		$a1_ok = array_key_exists($fIndex,$aligns) && array_key_exists($eIndex,$aligns[$fIndex]) && $aligns[$fIndex][$eIndex];
-		$a2_ok = array_key_exists($fIndex,$aligns2) && array_key_exists($eIndex,$aligns2[$fIndex]) && $aligns2[$fIndex][$eIndex];
+		$a1_ok = array_key_exists($fIndex,$aligns) && array_key_exists($eIndex,$aligns[$fIndex]);
+		$a2_ok = array_key_exists($fIndex,$aligns2) && array_key_exists($eIndex,$aligns2[$fIndex]);
 		if($a1_ok && $a2_ok){
 			$color = "green";
             $correct++;
 		}
 		else if($a1_ok){
-			$color = "blue";
+		    $color = "blue";
 		}
 		else if($a2_ok){
-			$color = "yellow";
+		    $color = "yellow";
 		}
 		else{
-			$color = "white";
+	        $color = "white";
 		}
-		echo "<td width='20' height='20' bgcolor=$color></td>";
+        echo "<td width='20' height='20' bgcolor=$color>";
+        $linkTag1 = ""; 
+        $linkTag2 = "";
+        $linkTagMap = ["possible"=>"P", "sure"=>"S"];
+        if(gettype($aligns[$fIndex][$eIndex]) == "string"){
+            $linkTag1 = $aligns[$fIndex][$eIndex];
+        }
+        if(gettype($aligns2[$fIndex][$eIndex]) == "string"){
+             $linkTag2 = $aligns2[$fIndex][$eIndex];            
+        }
+        if($linkTag1 != "" or $linkTag2 != ""){
+            printf("%s/%s", $linkTagMap[$linkTag1], $linkTagMap[$linkTag2]);
+        }
+        echo "</td>";
 	}
 	echo "</tr>";
 }
