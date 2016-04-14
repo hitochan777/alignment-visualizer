@@ -66,9 +66,10 @@ if(!$flag){
 
 $linkPattern = "/(\d+)-(\d+)(?:\[(.+)\])?/";
 foreach(explode(" ",$a) as $value){
+    $linkTag = true;
     $matches = [];
     preg_match($linkPattern, $value, $matches);
-    if(count($matches) == 3){
+    if(count($matches) == 4){
         $linkTag = $matches[3];
     }
     $fIndex = $matches[1];
@@ -83,7 +84,7 @@ foreach(explode(" ",$a2) as $value){
     $linkTag = true;
     $matches = [];
     preg_match($linkPattern, $value, $matches);
-    if(count($matches) == 3){
+    if(count($matches) == 4){
         $linkTag = $matches[3];
     }
     $fIndex = $matches[1];
