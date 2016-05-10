@@ -7,11 +7,11 @@ require_once("Sanitizer.php");
 <!DOCTYPE html>
 <html lang="en">
   <head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>アライメントチェック</title>
-	<!-- <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>アライメントチェック</title>
+    <!-- <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet"> -->
   </head>
   <body>
 <div class="container">
@@ -37,11 +37,24 @@ $fpt = fopen(DATADIR."/$dname/".$data["target"],"r");
 $fps = fopen(DATADIR."/$dname/".$data["source"],"r");
 $fpa = fopen(DATADIR."/$dname/".$data["align"][$sys],"r");
 $fpa2 = fopen(DATADIR."/$dname/".$data["align2"],"r");
-$fpftree = fopen(DATADIR."/$dname/".$data["source_tree"],"r"); # source tree
-$fpetree = fopen(DATADIR."/$dname/".$data["target_tree"][$etreeId],"r"); # target tree
+if(array_key_exists("source_tree",$data)){
+    $fpftree = fopen(DATADIR."/$dname/".$data["source_tree"],"r"); # source tree
+    $ftree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpftree ));
+}
+else{
+    $fpftree = null;
+    $ftree = null;
+}
+if(array_key_exists("target_tree",$data)){
+    $fpetree = fopen(DATADIR."/$dname/".$data["target_tree"][$etreeId],"r"); # target tree
+    $etree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpetree ));
+}
+else{
+    $fpetree = null;
+    $etree = null;
+}
 
-$ftree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpftree ));
-$etree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpetree ));
+
 
 $aligns = [];
 $aligns2 = [];
@@ -50,18 +63,18 @@ $alignNum2=0.0;
 $correct=0.0;
 $cnt = 1;
 $flag = false;
- 
+
 
 while(($f = fgets($fps))!==false && ($e = fgets($fpt))!==false && ($a = fgets($fpa))!==false && ($a2 = fgets($fpa2))!==false){
-	if(intval($_GET["id"])==$cnt){
-		$flag=true;
-		break;
-	}
-	$cnt++;
+    if(intval($_GET["id"])==$cnt){
+        $flag=true;
+        break;
+    }
+    $cnt++;
 }
 if(!$flag){
-	echo "<div class='alert alert-danger' role='alert'>No page found</div>";
-	exit();
+    echo "<div class='alert alert-danger' role='alert'>No page found</div>";
+    exit();
 }
 
 $linkPattern = "/(\d+)-(\d+)(?:\[(.+)\])?/";
@@ -74,11 +87,11 @@ foreach(explode(" ",$a) as $value){
     }
     $fIndex = $matches[1];
     $eIndex = $matches[2];
-	if(!array_key_exists($fIndex, $aligns)){
-		$aligns[$fIndex] = [];
-	}
-  $aligns[$fIndex][$eIndex] = $linkTag;
-  $alignNum1++;
+    if(!array_key_exists($fIndex, $aligns)){
+        $aligns[$fIndex] = [];
+    }
+    $aligns[$fIndex][$eIndex] = $linkTag;
+    $alignNum1++;
 }
 foreach(explode(" ",$a2) as $value){
     $linkTag = true;
@@ -89,38 +102,47 @@ foreach(explode(" ",$a2) as $value){
     }
     $fIndex = $matches[1];
     $eIndex = $matches[2];
-	if(!array_key_exists($fIndex, $aligns2)){
-		$aligns2[$fIndex] = [];
-	}
-	$aligns2[$fIndex][$eIndex] = $linkTag;
-  $alignNum2++;
+    if(!array_key_exists($fIndex, $aligns2)){
+        $aligns2[$fIndex] = [];
+    }
+    $aligns2[$fIndex][$eIndex] = $linkTag;
+    $alignNum2++;
 }
 $fwords = explode(" ", $f);
 $ewords = explode(" ", $e);
-$ftreeBuffer = $ftree->getVisualizedDependencyTree();
-$etreeBuffer = $etree->getVisualizedDependencyTree(true);
+if($ftree !== null){
+    $ftreeBuffer = $ftree->getVisualizedDependencyTree();
+}
+if($etree !== null){
+    $etreeBuffer = $etree->getVisualizedDependencyTree(true);
+}
 echo "<table border='1' style='border-collapse: collapse; empty-cells: show;'>";
 for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
-	echo "<tr>";
+    echo "<tr>";
     echo "<td height='20'>$fIndex</td>";
-    $ftreeBuffer[$fIndex] = Utility\Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
-	echo "<td height='20' title='".$ftree->nodeList[$fIndex]["pos"]."'>${ftreeBuffer[$fIndex]}</td>";
-	for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
-		$a1_ok = array_key_exists($fIndex,$aligns) && array_key_exists($eIndex,$aligns[$fIndex]);
-		$a2_ok = array_key_exists($fIndex,$aligns2) && array_key_exists($eIndex,$aligns2[$fIndex]);
-		if($a1_ok && $a2_ok){
-			$color = "green";
+    if($ftreeBuffer){
+        $ftreeBuffer[$fIndex] = Utility\Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
+        echo "<td height='20' title='".$ftree->nodeList[$fIndex]["pos"]."'>${ftreeBuffer[$fIndex]}</td>";
+    }
+    else{
+        echo "<td height='20'>${fwords[$fIndex]}</td>";
+    }
+    for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
+        $a1_ok = array_key_exists($fIndex,$aligns) && array_key_exists($eIndex,$aligns[$fIndex]);
+        $a2_ok = array_key_exists($fIndex,$aligns2) && array_key_exists($eIndex,$aligns2[$fIndex]);
+        if($a1_ok && $a2_ok){
+            $color = "green";
             $correct++;
-		}
-		else if($a1_ok){
-		    $color = "blue";
-		}
-		else if($a2_ok){
-		    $color = "yellow";
-		}
-		else{
-	        $color = "white";
-		}
+        }
+        else if($a1_ok){
+            $color = "blue";
+        }
+        else if($a2_ok){
+            $color = "yellow";
+        }
+        else{
+            $color = "white";
+        }
         echo "<td width='20' height='20' bgcolor=$color>";
         $linkTag1 = ""; 
         $linkTag2 = "";
@@ -129,14 +151,14 @@ for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
             $linkTag1 = $aligns[$fIndex][$eIndex];
         }
         if(gettype($aligns2[$fIndex][$eIndex]) == "string"){
-             $linkTag2 = $aligns2[$fIndex][$eIndex];            
+            $linkTag2 = $aligns2[$fIndex][$eIndex];            
         }
         if($linkTag1 != "" or $linkTag2 != ""){
             printf("%s/%s", $linkTagMap[$linkTag1], $linkTagMap[$linkTag2]);
         }
         echo "</td>";
-	}
-	echo "</tr>";
+    }
+    echo "</tr>";
 }
 echo "<tr><td></td>";
 ?>
@@ -148,20 +170,32 @@ echo "<tr><td></td>";
 
 <?php
 for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
-   	echo "<td valign='top' title='".$etree->nodeList[$eIndex]["pos"]."'>";
-    error_log(Utility\Sanitizer::escapeChar($etreeBuffer[$eIndex]));
-	for($i = 0; $i<mb_strlen($etreeBuffer[$eIndex]);++$i){
-        if(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
-            break; 
+    if($etreeBuffer){
+        echo "<td valign='top' title='".$etree->nodeList[$eIndex]["pos"]."'>";
+        error_log(Utility\Sanitizer::escapeChar($etreeBuffer[$eIndex]));
+        for($i = 0; $i<mb_strlen($etreeBuffer[$eIndex]);++$i){
+            if(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
+                break; 
+            }
+            echo Utility\Sanitizer::escapeChar(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8'))."<br>";
         }
-		echo Utility\Sanitizer::escapeChar(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8'))."<br>";
-	}
-	echo "</td>";
+    }
+    else{
+        echo "<td valign='top'>"; 
+        for($i = 0; $i<mb_strlen($ewords[$eIndex]);++$i){
+            if(mb_substr($ewords[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
+                break; 
+            }
+            echo Utility\Sanitizer::escapeChar(mb_substr($ewords[$eIndex],$i,1, 'UTF-8'))."<br>";
+        }
+
+    }
+    echo "</td>";
 }
 echo "</tr>";
 echo "<tr><td height='20' width='20'></td><td></td>";
 for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
-	echo "<td>$eIndex</td>";
+    echo "<td>$eIndex</td>";
 }
 echo "</tr>";
 echo "</table>";
@@ -183,10 +217,10 @@ echo "recall: $recall<br>";
 </div>
 </div>
 </div>
-	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-	<script src="bower_components/jquery/dist/jquery.min.js"></script>
-	<!-- Include all compiled plugins (below), or include individual files as needed -->
-	<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
   </body>
 </html>
 
