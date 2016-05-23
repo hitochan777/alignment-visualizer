@@ -1,5 +1,5 @@
 <?php
-namespace Tree;
+namespace Lib\Tree;
 class DependencyTree {
     public $nodeList = [];
     public $rootId = -1;

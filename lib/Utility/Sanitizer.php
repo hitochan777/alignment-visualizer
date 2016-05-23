@@ -1,5 +1,5 @@
 <?php
-namespace Utility;
+namespace Lib\Utility;
 
 class Sanitizer{
     public static function escapeChar($str) {

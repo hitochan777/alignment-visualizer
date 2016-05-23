@@ -1,5 +1,6 @@
 <?php
-require_once("config.php");
+require_once("init.php");
+require_once("config/config.php");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,12 +16,6 @@ require_once("config.php");
 <?php
 $dname = isset($_GET["dname"])?$_GET["dname"]:"ja_zh";
 $data = $files[$dname];
-// if(!verify($data)){
-// 	echo "some of the files are missing!";
-// }
-// else{
-// 	echo "Verification OK"."</br>";
-// }
 $fpt = fopen(DATADIR."/$dname/".$data["target"],"r");
 $fps = fopen(DATADIR."/$dname/".$data["source"],"r");
 ?>

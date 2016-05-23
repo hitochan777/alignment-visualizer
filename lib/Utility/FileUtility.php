@@ -1,5 +1,5 @@
 <?php
-namespace Utility;
+namespace Lib\Utility;
 
 class FileUtility{
     public static function getChunkByIndex($index, $delimiter, $fp){

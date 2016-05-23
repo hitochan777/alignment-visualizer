@@ -1,8 +1,9 @@
 <?php
-require_once("config.php");
-require_once("FileUtility.php");
-require_once("DependencyTree.php");
-require_once("Sanitizer.php");
+require_once("init.php");
+require_once("config/config.php");
+use Lib\Utility\Sanitizer;
+use Lib\Utility\FileUtility;
+use Lib\Tree\DependencyTree;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,7 +40,7 @@ $fpa = fopen(DATADIR."/$dname/".$data["align"][$sys],"r");
 $fpa2 = fopen(DATADIR."/$dname/".$data["align2"],"r");
 if(array_key_exists("source_tree",$data)){
     $fpftree = fopen(DATADIR."/$dname/".$data["source_tree"],"r"); # source tree
-    $ftree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpftree ));
+    $ftree = new DependencyTree(FileUtility::getChunkByIndex($id, "^#", $fpftree ));
 }
 else{
     $fpftree = null;
@@ -47,7 +48,7 @@ else{
 }
 if(array_key_exists("target_tree",$data)){
     $fpetree = fopen(DATADIR."/$dname/".$data["target_tree"][$etreeId],"r"); # target tree
-    $etree = new Tree\DependencyTree(Utility\FileUtility::getChunkByIndex($id, "^#", $fpetree ));
+    $etree = new DependencyTree(FileUtility::getChunkByIndex($id, "^#", $fpetree ));
 }
 else{
     $fpetree = null;
@@ -121,7 +122,7 @@ for($fIndex = 0;$fIndex<count($fwords);++$fIndex){
     echo "<tr>";
     echo "<td height='20'>$fIndex</td>";
     if($ftreeBuffer){
-        $ftreeBuffer[$fIndex] = Utility\Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
+        $ftreeBuffer[$fIndex] = Sanitizer::escapeChar($ftreeBuffer[$fIndex]);
         echo "<td height='20' title='".$ftree->nodeList[$fIndex]["pos"]."'>${ftreeBuffer[$fIndex]}</td>";
     }
     else{
@@ -172,12 +173,12 @@ echo "<tr><td></td>";
 for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
     if($etreeBuffer){
         echo "<td valign='top' title='".$etree->nodeList[$eIndex]["pos"]."'>";
-        error_log(Utility\Sanitizer::escapeChar($etreeBuffer[$eIndex]));
+        error_log(Sanitizer::escapeChar($etreeBuffer[$eIndex]));
         for($i = 0; $i<mb_strlen($etreeBuffer[$eIndex]);++$i){
             if(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
                 break; 
             }
-            echo Utility\Sanitizer::escapeChar(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8'))."<br>";
+            echo Sanitizer::escapeChar(mb_substr($etreeBuffer[$eIndex],$i,1, 'UTF-8'))."<br>";
         }
     }
     else{
@@ -186,7 +187,7 @@ for($eIndex = 0;$eIndex<count($ewords);++$eIndex){
             if(mb_substr($ewords[$eIndex],$i,1, 'UTF-8')==""){ # I don't know there are empty characters at the end
                 break; 
             }
-            echo Utility\Sanitizer::escapeChar(mb_substr($ewords[$eIndex],$i,1, 'UTF-8'))."<br>";
+            echo Sanitizer::escapeChar(mb_substr($ewords[$eIndex],$i,1, 'UTF-8'))."<br>";
         }
 
     }
